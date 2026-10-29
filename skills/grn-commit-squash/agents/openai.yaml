@@ -1,0 +1,4 @@
+interface:
+  display_name: "GRN Commit Squash"
+  short_description: "Curate PROJECT-MA commits while preserving intent"
+  default_prompt: "Use $grn-commit-squash to draft and verify a PROJECT-MA commit squash manifest before rewriting history."

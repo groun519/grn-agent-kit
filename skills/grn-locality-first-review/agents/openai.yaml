@@ -1,0 +1,4 @@
+interface:
+  display_name: "GRN 1 Structural Review"
+  short_description: "Review durable class ownership and concrete defects"
+  default_prompt: "Use $grn-locality-first-review to review this design's class-level owners, exact concept boundaries, first-caller-independent reuse, dependency direction, and confirmed future requirements without hypothetical overdesign. Report directly evidenced functional defects and structural-philosophy violations as two separate results; do not perform an exhaustive correctness or implementation audit."

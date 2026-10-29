@@ -1,0 +1,4 @@
+interface:
+  display_name: "작업 CP 만들기"
+  short_description: "프로젝트 작업을 체크박스와 완료 기준으로 나누고 검증 상태를 관리합니다"
+  default_prompt: "$grn-project-checkpoints로 현재 프로젝트의 작업을 CP별 체크박스와 완료 기준으로 정리해줘."

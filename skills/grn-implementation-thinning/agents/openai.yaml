@@ -1,0 +1,4 @@
+interface:
+  display_name: "GRN 3 Implementation Thinning"
+  short_description: "Remove unnecessary implementation while preserving contracts"
+  default_prompt: "Use $grn-implementation-thinning to compact this implementation after its structure and API contracts are settled."

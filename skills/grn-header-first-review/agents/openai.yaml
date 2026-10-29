@@ -1,0 +1,4 @@
+interface:
+  display_name: "GRN 2 Header First Review"
+  short_description: "Review object APIs from headers before implementations"
+  default_prompt: "Use $grn-header-first-review to review these C++ APIs from their headers before inspecting implementations."
