@@ -27,6 +27,23 @@ A narrow requested file scope limits edits, not this prerequisite evidence. Read
 
 If the evidence contradicts the accepted owner, stop thinning the affected path and report a structural premise failure for locality-first review. If the owner is sound but the declared contract is inaccurate, return it to header-first review. Do not delete code, add a wrapper, or move policy while pretending the change is implementation compaction. Continue thinning only the paths whose structural and header premises remain valid.
 
+## Contract Question Loop
+
+Current usage and current construction paths are evidence of what exists now, but their absence does not prove that a broader future contract is unintended. This matters especially for new or incomplete features.
+
+When the classification of an interface, base type, factory, nullable dependency, extension hook, compatibility path, or fallback depends on an unconfirmed future support range:
+
+1. Search for positive contract evidence in explicit user decisions, architecture documents, accepted locality-first or header-first conclusions, type-level ownership restrictions, and confirmed future requirements.
+2. If the contract is confirmed, classify the implementation normally.
+3. If the contract is not confirmed, mark the element as `Contract Question`. Do not classify it as removable merely because no current second use exists.
+4. Continue the complete review. Do not interrupt discovery to ask immediately.
+5. Collect every contract question and present them after all confirmed findings have been identified.
+6. Do not edit a `Contract Question` path until the contract is answered.
+7. Treat the answer as a new accepted premise and rerun the complete implementation-thinning review. Do not patch only the directly questioned line, because the answer may change related guards, dependencies, helpers, caches, and includes.
+8. Do not report the review as clean while any contract question remains unresolved. If the user defers the question, preserve the implementation and report that path as unreviewed rather than confirmed correct.
+
+Ask only questions whose answer changes a concrete implementation decision. Do not ask hypothetical extension questions when the contract is already known or an external boundary clearly requires the abstraction.
+
 ## Review Order
 
 1. Read repository instructions and relevant architecture documents.
@@ -35,9 +52,13 @@ If the evidence contradicts the accepted owner, stop thinning the affected path 
 4. Read the implementation, then trace every current caller, existing test, serialization path, engine callback, and external boundary that can reach it.
 5. Write down the required effects and invariants before deleting code.
 6. Identify the smallest meaningful functional units in the implementation, then classify each non-trivial helper, field, cache, branch, guard, dependency, and intermediate representation as required, boundary-required, duplicated, dead, or speculative.
-7. Remove or inline only the duplicated, dead, and speculative parts.
-8. Re-read the complete call path after edits and verify that it is shorter without hiding policy or merging unrelated responsibilities.
-9. Prefer direct source, build, editor, and runtime validation. Run an existing automated test only when it protects a relevant stable contract; add a new test only when the test gate below is satisfied.
+7. Assign each reviewed element one decision: `Confirmed Finding`, `Confirmed Keep`, or `Contract Question`.
+8. Finish collecting the full review before asking contract questions.
+9. Present every confirmed finding and every contract question before edits.
+10. Remove or inline only approved `Confirmed Finding` elements classified as duplicated, dead, or speculative.
+11. After contract answers are received, record them as accepted premises and rerun this review from step 2.
+12. Re-read the complete call path after edits and verify that it is shorter without hiding policy or merging unrelated responsibilities.
+13. Prefer direct source, build, editor, and runtime validation. Run an existing automated test only when it protects a relevant stable contract; add a new test only when the test gate below is satisfied.
 
 ## Removal Candidates
 
@@ -49,12 +70,12 @@ Look for:
 - caches without a demonstrated lifecycle or cost justification;
 - repeated validation or normalization after an authoritative owner has already completed it;
 - defensive branches for states made impossible by current construction and ownership;
-- future flags, extension hooks, compatibility paths, and fallback objects with no current caller or confirmed requirement;
+- future flags, extension hooks, compatibility paths, and fallback objects whose current behavior and intended contract provide no reason to keep them;
 - duplicate representations that must be kept synchronized;
 - optional-feature bindings, ticking, allocation, or state that remain active when the feature is absent;
 - includes, dependencies, parameters, temporaries, and conversions left behind by earlier designs.
 
-Do not preserve code merely because its guarded condition or future use is imaginable. Require a current call path, a confirmed future requirement already included in the accepted design, an external uncertainty boundary, a serialized compatibility contract, or an explicit supported state.
+Do not preserve code merely because its guarded condition or future use is imaginable. Conversely, the absence of a current call path does not by itself prove that an extension mechanism is outside the intended contract, especially in new or incomplete features. Require positive contract evidence before narrowing a future support range, and use the Contract Question Loop when that evidence is missing.
 
 ## Keep Real Mechanics
 
@@ -120,13 +141,31 @@ When the user requests changes:
 
 ## Report
 
-Present concrete thinning findings before edits. For each finding, state:
+Complete discovery before presenting or editing findings.
+
+For every reviewed candidate, record:
 
 - the implementation element;
-- why it is duplicated, dead, speculative, or unnecessarily indirect;
-- the current caller or invariant evidence;
-- the proposed deletion, inlining, or consolidation;
-- the behavior that must remain unchanged.
+- its classification;
+- its decision: `Confirmed Finding`, `Confirmed Keep`, or `Contract Question`;
+- the current caller, contract, or invariant evidence;
+- the proposed deletion, inlining, consolidation, or retention;
+- the behavior that must remain unchanged;
+- the contract question, only when the decision depends on an unresolved contract.
+
+Present results in this order:
+
+1. Confirmed Findings
+2. Contract Questions
+3. Important Confirmed Keeps
+
+A contract question must state:
+
+- the observed current structure;
+- the exact implementation choice affected by the answer;
+- the future owner, collaborator, or extension range that must be confirmed.
+
+After the user answers contract questions, rerun the complete review and report the new result. Do not describe the earlier review as final or clean.
 
 After edits, report removed fields, functions, branches, dependencies, and layers separately rather than calling everything "cleanup." Name important candidates that were intentionally kept and the boundary or invariant that justifies them.
 
