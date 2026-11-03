@@ -17,6 +17,23 @@ A narrow requested file scope limits edits, not the evidence needed to validate 
 
 Do not redesign the class map in this pass. Separate the structural premise failure from header-contract findings, identify the directly implicated owner and collaborator, and return the affected path to a locality-first review. Continue header review only for APIs whose ownership premise remains valid.
 
+## Concept Existence Gate
+
+Before accepting an existing name or proposing a replacement, verify that every noun phrase denotes a concept that actually exists in the code or established design. Do not turn a group of co-occurring implementation effects into a named concept merely because they happen in one function or need one call site.
+
+A concept passes this gate only when the review can identify:
+
+- a concrete representation such as a type, field, parameter, or explicitly maintained invariant, or established terminology used consistently across the relevant APIs;
+- one owner and a boundary that distinguishes what belongs to the concept from what does not;
+- a lifecycle, value rule, or atomic transition that explains why its constituent changes belong together;
+- callers that use the same concept rather than only one implementation that performs the effects together.
+
+A concept does not need one dedicated struct, but a multi-field concept must have a demonstrable invariant and owner. Repeated co-location, a shared visual outcome, or a convenient summary sentence is not sufficient evidence.
+
+Apply extra scrutiny to umbrella nouns such as `State`, `Placement`, `Context`, `Presentation`, `Result`, `Data`, and `Process`. Do not accept them without the evidence above. If a proposed noun fails this gate, do not replace the old name with a longer or more precise-sounding abstraction. Reuse an existing concrete concept, reshape the API around the actual source, target, or value, split independently meaningful operations, or return the ownership question to locality-first review.
+
+Run this gate for proposed replacement names as well as existing names. Do not present a concrete rename until its target concept has passed.
+
 ## Review Order
 
 1. Read the repository instructions and relevant architecture documents.
@@ -24,12 +41,28 @@ Do not redesign the class map in this pass. Separate the structural premise fail
 3. Read the in-scope headers and their direct collaborator headers without reading their implementations first.
 4. Apply the Review Premise Gate and separate any upstream structural failure from API findings.
 5. Identify the smallest independently meaningful operations owned by each object before accepting a higher-level convenience API.
-6. Review each header as its own API surface. For each class and member, try to state its result in one concrete sentence.
-7. Record every place where that sentence requires guessing or implementation knowledge.
-8. Run a separate split review for compound names containing `And`, `Or`, or multiple parallel effects.
-9. Only then inspect implementations and call sites to compare actual behavior with the header prediction.
-10. Treat every prediction mismatch as an API finding even when the implementation is functionally correct.
-11. After any edits, repeat the header-only pass before compiling or running tests.
+6. Apply the Concept Existence Gate to the nouns used by the current API and every proposed replacement.
+7. Review each header as its own API surface. For each class and member, try to state its result in one concrete sentence.
+8. Record every place where that sentence requires guessing or implementation knowledge.
+9. Run a separate split review for compound names containing `And`, `Or`, or multiple parallel effects.
+10. Only then inspect implementations and call sites to compare actual behavior with the header prediction.
+11. Treat every prediction mismatch as an API finding even when the implementation is functionally correct.
+12. After any edits, repeat the header-only pass, including the Concept Existence Gate, before compiling or running tests.
+
+## Finding Disposition Gate
+
+Discovery scope and edit scope are separate. Complete the requested discovery even when it reveals problems beyond the current change, but do not automatically add every confirmed finding to the implementation scope.
+
+Before proposing or making an edit, assign each finding candidate exactly one disposition:
+
+- `Current Change`: The current diff introduced or worsened the problem, or leaving it unresolved would make the responsibility or contract being changed internally inconsistent, misleading, or structurally incomplete. Resolve it before completing the current work even when it does not immediately block runtime behavior.
+- `Required Prerequisite`: The problem belongs to another path or owner, but leaving it unresolved would force the current change to depend on a temporary workaround, duplicated ownership, or a false contract. Present it as a separate coherent change and candidate commit boundary before continuing the dependent work.
+- `Adjacent Follow-up`: The problem already exists in an independently owned responsibility and the current change remains structurally complete without correcting it. Report it without editing it in the current scope.
+- `Evidence Required`: The problem is not yet confirmed by sufficient source, editor, or runtime evidence. State the missing evidence and do not edit the path yet.
+
+Classify by causality and ownership, not severity or functional blocking alone. Do not defer a structural problem merely because the feature currently runs. Conversely, do not absorb an independently owned problem merely because it was discovered while tracing the current feature.
+
+If a correction adds or replaces an execution path, owner, collaborator, persistence boundary, replication path, or validation boundary, state that scope change and its candidate commit boundary before editing. A general approval such as "fix it" or "try it" applies only to the explicitly presented finding, disposition, and correction scope; it does not authorize additional findings discovered during implementation.
 
 ## Header Checks
 
@@ -99,14 +132,17 @@ Treat a name that joins actions or outcomes with `And`, `Or`, or a list of effec
 
 Split the operation when those clauses are independently meaningful. Keep it together when they are inseparable mechanics of one transaction or invariant, but rename the API after that owned purpose instead of listing its internal steps. For example, prefer `NormalizeLoadedModuleDiscoveries()` over `RemoveInvalidAndDuplicateModuleDiscoveries()` when filtering, deduplication, and ordering collectively restore the loaded data's invariant.
 
+An owned purpose does not by itself establish a valid named concept. Before replacing a compound name with a purpose-oriented name, require the replacement noun to pass the Concept Existence Gate.
+
 After choosing to keep a compound operation, verify that the replacement name is concrete enough to predict mutation and scope. Do not replace an exact but bundled name with a vague umbrella such as `Process`, `Handle`, or `Update`.
 
-When proposing names, prefer action + target + relevant scope or condition. A longer exact name is better than a short name that requires opening the implementation.
+When proposing names, first identify the target concept and its concrete evidence. Only then prefer action + target + relevant scope or condition. A longer exact name is better than a short name that requires opening the implementation, but length does not make an invented concept valid.
 
 ## Editing
 
 When the user requests changes:
 
+- edit only `Current Change` findings and explicitly approved `Required Prerequisite` findings;
 - make the smallest rename or responsibility split that resolves the finding;
 - update declarations, definitions, call sites, serialized references, architecture documents, and only tests that protect a real public contract in the same change when applicable;
 - preserve behavior unless the user explicitly approves a behavioral change;
@@ -124,7 +160,8 @@ Present findings before implementation details. For each significant finding, in
 - what a first-time reader would reasonably predict;
 - the actual behavior after implementation inspection;
 - the mismatch or hidden responsibility;
-- a concrete rename, split, or ownership correction.
+- a concrete rename, split, or ownership correction, including the code or design evidence for every newly proposed concept;
+- its disposition: `Current Change`, `Required Prerequisite`, `Adjacent Follow-up`, or `Evidence Required`.
 
 When the review results in edits, report every logical modification separately. For each modification, state:
 
