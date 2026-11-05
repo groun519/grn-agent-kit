@@ -49,6 +49,21 @@ The structural result decides whether the class-level shape matches the architec
 11. Compare the current class map with the shortest complete ownership path that still supports all current and confirmed requirements.
 12. Record directly evidenced functional defects separately. Do not classify them as structural unless the class ownership or dependency direction is the cause.
 
+## Finding Disposition Gate
+
+Discovery scope and edit scope are separate. Complete the requested discovery even when it reveals problems beyond the current change, but do not automatically add every confirmed finding to the implementation scope.
+
+Before proposing or making an edit, assign each finding candidate exactly one disposition:
+
+- `Current Change`: The current diff introduced or worsened the problem, or leaving it unresolved would make the responsibility or contract being changed internally inconsistent, misleading, or structurally incomplete. Resolve it before completing the current work even when it does not immediately block runtime behavior.
+- `Required Prerequisite`: The problem belongs to another path or owner, but leaving it unresolved would force the current change to depend on a temporary workaround, duplicated ownership, or a false contract. Present it as a separate coherent change and candidate commit boundary before continuing the dependent work.
+- `Adjacent Follow-up`: The problem already exists in an independently owned responsibility and the current change remains structurally complete without correcting it. Report it without editing it in the current scope.
+- `Evidence Required`: The problem is not yet confirmed by sufficient source, editor, or runtime evidence. State the missing evidence and do not edit the path yet.
+
+Classify by causality and ownership, not severity or functional blocking alone. Do not defer a structural problem merely because the feature currently runs. Conversely, do not absorb an independently owned problem merely because it was discovered while tracing the current feature.
+
+If a correction adds or replaces an execution path, owner, collaborator, persistence boundary, replication path, or validation boundary, state that scope change and its candidate commit boundary before editing. A general approval such as "fix it" or "try it" applies only to the explicitly presented finding, disposition, and correction scope; it does not authorize additional findings discovered during implementation.
+
 ## Ownership Standard
 
 Prefer a caller that reaches one semantic owner without traversing classes that only forward, rename, or redistribute the request. The responsible class may contain several private mechanics when they all implement its one capability.
@@ -115,12 +130,15 @@ For each structural finding, state:
 - the smallest class-level correction: keep, merge, split, move, or remove;
 - which later review should inspect API or implementation details.
 
+Also state the disposition of every functional and structural finding candidate: `Current Change`, `Required Prerequisite`, `Adjacent Follow-up`, or `Evidence Required`.
+
 Also name non-obvious classes that were reviewed and intentionally retained, with the lifecycle, boundary, or ownership reason that justifies them. If the class structure already matches the philosophy, say so instead of inventing functional or implementation findings.
 
 ## Editing
 
 When the user requests implementation:
 
+- edit only `Current Change` findings and explicitly approved `Required Prerequisite` findings;
 - make only the smallest class-level ownership change supported by current dependency paths;
 - remove types, dependencies, and forwarding layers that existed only for the rejected ownership model;
 - update architecture documents affected by the changed boundary;

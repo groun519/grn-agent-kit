@@ -9,6 +9,7 @@ Personal Codex skills and the small scripts needed to back them up or restore th
 - `grn-implementation-thinning`
 - `grn-locality-first-review`
 - `grn-project-checkpoints`
+- `grn-review-slice-preparation`
 
 Skills live in `skills/`. Each directory is copied as a complete Agent Skill bundle, including `SKILL.md`, UI metadata, references, and scripts when present.
 
@@ -19,8 +20,9 @@ The three review skills intentionally operate at different levels:
 1. `grn-locality-first-review` reviews large-scale ownership, boundaries, dependencies, and abstraction choices, while reporting directly evidenced functional defects in a separate result.
 2. `grn-header-first-review` reviews each header as an API contract before reading its implementation.
 3. `grn-implementation-thinning` removes unnecessary implementation machinery after the structure and API are accepted.
+4. `grn-review-slice-preparation` preserves the fully reviewed implementation and exposes the finest safe, coherent slices for stepwise user review and commits.
 
-Do not combine all three passes into one cleanup. A finding that changes ownership returns to the structural pass, and a finding that changes a public contract returns to the header-first pass.
+Do not combine the first three review passes into one cleanup. A finding that changes ownership returns to the structural pass, and a finding that changes a public contract returns to the header-first pass. Use slice preparation only after those reviews are complete; it isolates accepted changes but does not approve them.
 
 The structural pass does not equate locality with short-term minimalism. It models concepts precisely, keeps reusable capabilities independent of their first caller, includes confirmed future requirements in the current foundation, and applies YAGNI only to hypothetical futures.
 

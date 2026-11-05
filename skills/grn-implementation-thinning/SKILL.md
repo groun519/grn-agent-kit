@@ -60,6 +60,21 @@ Ask only questions whose answer changes a concrete implementation decision. Do n
 12. Re-read the complete call path after edits and verify that it is shorter without hiding policy or merging unrelated responsibilities.
 13. Prefer direct source, build, editor, and runtime validation. Run an existing automated test only when it protects a relevant stable contract; add a new test only when the test gate below is satisfied.
 
+## Finding Disposition Gate
+
+Discovery scope and edit scope are separate. Complete the requested discovery even when it reveals problems beyond the current change, but do not automatically add every confirmed finding to the implementation scope.
+
+The existing `Confirmed Finding`, `Confirmed Keep`, and `Contract Question` decisions describe whether an implementation element should change. Assign every `Confirmed Finding` one of the first three dispositions below. Use `Evidence Required` instead of `Confirmed Finding` when the concern lacks sufficient evidence.
+
+- `Current Change`: The current diff introduced or worsened the problem, or leaving it unresolved would make the responsibility or contract being changed internally inconsistent, misleading, or structurally incomplete. Resolve it before completing the current work even when it does not immediately block runtime behavior.
+- `Required Prerequisite`: The problem belongs to another path or owner, but leaving it unresolved would force the current change to depend on a temporary workaround, duplicated ownership, or a false contract. Present it as a separate coherent change and candidate commit boundary before continuing the dependent work.
+- `Adjacent Follow-up`: The problem already exists in an independently owned responsibility and the current change remains structurally complete without correcting it. Report it without editing it in the current scope.
+- `Evidence Required`: The problem is not yet confirmed by sufficient source, editor, or runtime evidence. State the missing evidence and do not edit the path yet.
+
+Classify by causality and ownership, not severity or functional blocking alone. Do not defer a structural problem merely because the feature currently runs. Conversely, do not absorb an independently owned problem merely because it was discovered while tracing the current feature.
+
+If a correction adds or replaces an execution path, owner, collaborator, persistence boundary, replication path, or validation boundary, state that scope change and its candidate commit boundary before editing. A general approval such as "fix it" or "try it" applies only to the explicitly presented finding, disposition, and correction scope; it does not authorize additional findings discovered during implementation.
+
 ## Removal Candidates
 
 Look for:
@@ -114,6 +129,20 @@ Classify every non-trivial guard:
 
 Keep the first two. Remove speculative guards together with branches, fields, helpers, and cached state that exist only to support them. For impossible programmer states where detection remains useful and repository conventions allow it, prefer an explicit assertion over silent fake recovery.
 
+### Path-Condition Subsumption
+
+Do not evaluate a guard, boolean query, or validation call only against the callee's general input range. Evaluate it under the facts already established on the exact caller path.
+
+For each candidate:
+
+1. Record the facts established by earlier branches, type restrictions, constant arguments, construction rules, and accepted domain invariants.
+2. Expand the called predicate only far enough to identify every condition under which it can fail.
+3. Check whether any failure condition remains reachable after applying the caller-path facts.
+4. If none remains, classify the call and any temporaries used only by it as duplicated, even when the general-purpose callee can fail for other callers.
+5. Keep the validation when it protects an independently reachable boundary or when the implication cannot be proved from current source and accepted contracts.
+
+Do not preserve a generic validator merely because its name describes a useful rule. Conversely, do not remove one from intuition or naming alone: the caller's established facts must imply the result on every current path being thinned.
+
 ## Automated Test Gate
 
 Default to not adding an automated test. Tests are justified only when all of the following are true:
@@ -133,6 +162,7 @@ Before adding a test, state the exact regression it catches and why the other av
 
 When the user requests changes:
 
+- edit only `Current Change` findings and explicitly approved `Required Prerequisite` findings;
 - preserve accepted behavior unless the user explicitly approves a change;
 - make the smallest coherent deletion or consolidation rather than layering another abstraction over the excess;
 - update callers and tests when removed indirection changes their mechanical path;
@@ -148,6 +178,8 @@ For every reviewed candidate, record:
 - the implementation element;
 - its classification;
 - its decision: `Confirmed Finding`, `Confirmed Keep`, or `Contract Question`;
+- its disposition when the decision is `Confirmed Finding`: `Current Change`, `Required Prerequisite`, or `Adjacent Follow-up`;
+- `Evidence Required` instead of a confirmed decision when the concern lacks sufficient evidence;
 - the current caller, contract, or invariant evidence;
 - the proposed deletion, inlining, consolidation, or retention;
 - the behavior that must remain unchanged;

@@ -1,0 +1,4 @@
+interface:
+  display_name: "GRN 4 Review Slice Preparation"
+  short_description: "Prepare reviewed changes for stepwise user commits"
+  default_prompt: "Use $grn-review-slice-preparation to preserve the complete GRN-reviewed implementation in a fixed-hash stash, divide it into ordered user-reviewable slices, expose one slice at a time, and reconcile every original change before the stash is removed."
